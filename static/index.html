@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Personal Knowledge Base</title>
+  <style>
+    :root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 0; padding: 24px; max-width: 960px; }
+    header { margin-bottom: 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Personal Knowledge Base</h1>
+    <p>Stuff goes here.</p>
+  </header>
+
+  <div class="card">
+    <h2>Status</h2>
+    <pre id="status">Loading…</pre>
+  </div>
+
+  <script>
+    fetch('/health').then(r => r.json()).then(d => {
+      document.getElementById('status').textContent = JSON.stringify(d, null, 2);
+    }).catch(e => {
+      document.getElementById('status').textContent = 'Backend not reachable yet.';
+    });
+  </script>
+</body>
+</html>

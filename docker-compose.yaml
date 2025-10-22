@@ -1,0 +1,23 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: pkb-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pkb
+      POSTGRES_USER: pkb
+      POSTGRES_PASSWORD: pkb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+  pgweb:
+    image: sosedoff/pgweb:latest
+    container_name: pkb-pgweb
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://pkb:pkb@db:5432/pkb?sslmode=disable
+    ports:
+      - "8081:8081"
