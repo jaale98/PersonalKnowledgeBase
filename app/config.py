@@ -11,3 +11,4 @@ ALLOW_CORS_ALL = os.getenv("ALLOW_CORS_ALL", "true").lower() == "true"
 ENABLE_FTS = os.getenv("ENABLE_FTS", "false").lower() == "true"
 ANN_LISTS = int(os.getenv("ANN_LISTS", "100"))
 RESULT_LIMIT_DEFAULT = int(os.getenv("RESULT_LIMIT_DEFAULT", "20"))
+ANN_PROBES = int(os.getenv("ANN_PROBES", "10"))

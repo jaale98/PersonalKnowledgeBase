@@ -14,3 +14,11 @@ class NoteOut(BaseModel):
     created_at: str
     updated_at: str
     score: Optional[float] = None
+
+class NoteListParams(BaseModel):
+    limit: int = 20
+    offset: int = 0
+
+class SearchIn(BaseModel):
+    q: str
+    limit: int | None = None
