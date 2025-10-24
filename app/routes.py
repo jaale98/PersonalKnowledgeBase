@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Body, HTTPException, Query
 from typing import List
+from .config import ENABLE_FTS, FUSION_ALPHA
 from .db import (
     db_diagnostics,
     insert_note_with_embedding,
@@ -9,9 +10,13 @@ from .db import (
     list_notes_with_tags,
     execute, fetchone,
     search_notes_by_vector,
+    search_notes_by_vector_filtered,
+    update_note_and_embedding,
+    replace_note_tags,
+    search_notes_hybrid_filtered
 )
 from .embeddings import generate_embedding
-from .models import NoteCreate, NoteOut, SearchIn
+from .models import NoteCreate, NoteOut, SearchIn, NoteUpdate
 
 router = APIRouter()
 
@@ -115,27 +120,72 @@ def delete_note(note_id: int):
         raise HTTPException(status_code=404, detail="Note not found")
     return {"status": "ok", "deleted": note_id}
 
+
 @router.post("/search", response_model=List[NoteOut])
 def search(payload: SearchIn):
-    """
-    Semantic search: embed the query, run vector similarity, return ranked notes.
-    """
     q = (payload.q or "").strip()
     if not q:
         raise HTTPException(status_code=400, detail="Query text 'q' is required")
 
     vec = generate_embedding(q)
-    rows = search_notes_by_vector(vec, limit=payload.limit)
+
+    use_hybrid = (getattr(payload, "mode", "hybrid") == "hybrid") and ENABLE_FTS
+
+    if use_hybrid:
+        rows = search_notes_hybrid_filtered(
+            query_text=q,
+            query_vec=vec,
+            limit=payload.limit,
+            tags=(payload.tags or None),
+            match=payload.match,
+            alpha=FUSION_ALPHA,
+        )
+    else:
+        rows = search_notes_by_vector_filtered(
+            query_vec=vec,
+            limit=payload.limit,
+            tags=(payload.tags or None),
+            match=payload.match,
+        )
 
     out: List[NoteOut] = []
     for r in rows:
+        score_idx = 8 if (use_hybrid and len(r) > 8) else 7
+        score_val = float(r[score_idx]) if (len(r) > score_idx and r[score_idx] is not None) else None
         out.append(NoteOut(
-            id=r[0],
-            title=r[1],
-            body=r[2],
-            created_at=r[3],
-            updated_at=r[4],
+            id=r[0], title=r[1], body=r[2],
+            created_at=r[3], updated_at=r[4],
             tags=r[5] or [],
-            score=float(r[7]) if r[7] is not None else None,
+            score=score_val,
         ))
     return out
+
+
+@router.put("/notes/{note_id}", response_model=NoteOut)
+def update_note(note_id: int, payload: NoteUpdate):
+    row = get_note_with_tags(note_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Note not found")
+    cur_title, cur_body = row[1], row[2]
+
+    new_title = (payload.title if payload.title is not None else cur_title).strip()
+    new_body  = (payload.body  if payload.body  is not None else cur_body).strip()
+    if not new_title or not new_body:
+        raise HTTPException(status_code=400, detail="Title and body cannot be empty")
+
+    to_embed = f"{new_title}\n\n{new_body}"
+    vec = generate_embedding(to_embed)
+
+    ok = update_note_and_embedding(note_id, new_title, new_body, vec)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to update note")
+
+    if payload.tags is not None:
+        tag_ids = upsert_tags_get_ids(payload.tags)
+        replace_note_tags(note_id, tag_ids)
+
+    row = get_note_with_tags(note_id)
+    return NoteOut(
+        id=row[0], title=row[1], body=row[2],
+        created_at=row[3], updated_at=row[4], tags=row[5] or []
+    )
