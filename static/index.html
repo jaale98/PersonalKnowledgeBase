@@ -42,7 +42,8 @@
 
     body > header,
     body > .layout {
-      width: min(1080px, 100%);
+      width: min(1280px, 100%);
+      margin-inline: auto;
     }
 
     header {
@@ -76,7 +77,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+      grid-template-columns: minmax(360px, 34vw) minmax(0, 1fr);
       gap: 26px;
     }
 
@@ -168,10 +169,12 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      flex-wrap: nowrap;
     }
 
     .row > * {
-      flex: 1;
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     button {
@@ -180,6 +183,9 @@
 
     .btn {
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       padding: 10px 18px;
       border-radius: 12px;
       border: 1px solid transparent;
@@ -207,11 +213,55 @@
     }
 
     .btn.icon {
-      padding: 8px 14px;
+      padding: 8px 12px;
       background: rgba(79, 99, 255, 0.12);
       color: var(--accent-dark);
       border: 1px solid rgba(79, 99, 255, 0.16);
       box-shadow: none;
+      min-width: 64px;
+    }
+
+    .row .btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      min-width: 48px;
+    }
+
+    .row .btn:not(.icon) {
+      min-width: 96px;
+    }
+
+    .row select {
+      min-width: 120px;
+    }
+
+    .row > .row {
+      flex: 0 0 auto;
+      gap: 8px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .panel .row {
+      width: 100%;
+    }
+
+    .row[style*="justify-content:space-between"] {
+      gap: 6px;
+    }
+
+    .row[style*="justify-content:space-between"] > :first-child {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .row[style*="justify-content:space-between"] > :not(:first-child) {
+      flex: 0 0 auto;
+    }
+
+    #clearSearchBtn {
+      padding-inline: 16px;
     }
 
     .btn.icon:hover {
@@ -298,6 +348,10 @@
       margin-top: 6px;
     }
 
+    .note-item .tags + .row {
+      margin-top: 12px;
+    }
+
     .right {
       text-align: right;
     }
@@ -332,6 +386,38 @@
       border: 1px dashed rgba(79, 99, 255, 0.28);
       border-radius: var(--radius-md);
       box-shadow: inset 0 0 0 1px rgba(79, 99, 255, 0.08);
+    }
+
+    @media (max-width: 700px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .row {
+        flex-wrap: wrap;
+      }
+      .row .btn,
+      .row select {
+        flex: 0 0 auto;
+      }
+      .row input,
+      .row textarea {
+        flex: 1 1 100%;
+      }
+      .row select {
+        min-width: 100%;
+      }
+      .row .btn:not(.icon) {
+        min-width: 100%;
+      }
+      .row > .row {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+      #clearSearchBtn,
+      #searchBtn {
+        width: auto;
+      }
     }
   </style>
 </head>
